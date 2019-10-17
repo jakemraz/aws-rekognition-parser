@@ -10,7 +10,7 @@ class BoundBox:
     height = 0.0
 
 class Face:
-    name = ""
+    externalImageId = ""
 
     def addBoundBox(self, boundBox):
         self.boundBox = boundBox
@@ -45,6 +45,21 @@ def parseRekognitionJson(obj):
         face = Face()
         box = BoundBox()
         
+        maxSimilarity = 0
+        maxIndex = -1
+        i = 0
+        for matchedFace in response['MatchedFaces']:
+            if matchedFace['Similarity'] > maxSimilarity:
+                maxIndex = i
+                maxSimilarity = matchedFace['Similarity']
+            i += 1
+        
+        if maxIndex < 0:
+            continue
+
+        matchedFace = response['MatchedFaces'][maxIndex]
+        face.externalImageId = matchedFace['Face']['ExternalImageId']
+
         detectedFace = response['DetectedFace']
         box.height = detectedFace['BoundingBox']['Height']
         box.width = detectedFace['BoundingBox']['Width']
@@ -52,6 +67,9 @@ def parseRekognitionJson(obj):
         box.top = detectedFace['BoundingBox']['Top']
         
         face.addBoundBox(box)
+
+        
+
         parcel.addFace(face)
 
     return parcel
@@ -75,8 +93,8 @@ if __name__ == "__main__":
     # print(type(parcel))
     # print(parcel.producerTimeStamp)
     
-    # for face in parcel.faces:
-    #     print(face.boundBox.height)
+    for face in parcel.faces:
+        print(face.externalImageId)
 
 
 
