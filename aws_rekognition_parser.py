@@ -1,7 +1,6 @@
 from __future__ import print_function
 import json
-
-filename = 'sample.json'
+import decimal
 
 class BoundBox:
     left = 0.0
@@ -20,18 +19,14 @@ class Face:
 
 class RekognitionParcel:
     producerTimeStamp = 0.0
-    faces = list()
+
     def __init__(self, *args, **kwargs):
+        self.faces = list()
+        self.faces.clear()
         pass
     def addFace(self, face):
         self.faces.append(face)
         pass
-
-def readFile(filename):
-    f = open(filename, 'r')
-    obj = f.readline()
-    f.close()
-    return obj
 
 def parseRekognitionJson(obj):
     parcel = RekognitionParcel()
@@ -63,7 +58,7 @@ def parseRekognitionJson(obj):
         box.width = detectedFace['BoundingBox']['Width']
         box.left = detectedFace['BoundingBox']['Left']
         box.top = detectedFace['BoundingBox']['Top']
-        face.addBoundBox(box)     
+        face.addBoundBox(box)
         parcel.addFace(face)
 
     return parcel
@@ -84,12 +79,13 @@ def getNearestFace(parcel):
         return
 
     # found person
-    face = parcel.faces[maxIndex]    
+    face = parcel.faces[maxIndex]
     print('result:', face.externalImageId)
     return face
 
 def getNearestInformation(jsonObj):
 
+    jsonObj = json.loads(jsonObj)
     # Do Nothing if FaceSearchResponse is None
     if jsonObj.get('FaceSearchResponse') is None:
         return
@@ -102,10 +98,13 @@ def getNearestInformation(jsonObj):
 
     # Get Nearest Face Information (Who, Where)
     face = getNearestFace(parcel)
-    print('timestamp:', timestamp,',name:', face.externalImageId, ',box:', face.boundBox.toJson())  
+    if face is None:
+        return
+    
+    print('timestamp:', timestamp,',name:', face.externalImageId, ',box:', face.boundBox.toJson())
 
     return {
-        'timestamp':timestamp,
-        'name':face.externalImageId
+        'Timestamp':int(timestamp),
+        'Name':face.externalImageId
     }
 
