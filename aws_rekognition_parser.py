@@ -8,6 +8,8 @@ class BoundBox:
     top = 0.0
     width = 0.0
     height = 0.0
+    def toJson(self):
+        return json.dumps(self.__dict__)
 
 class Face:
     externalImageId = ""
@@ -24,10 +26,6 @@ class RekognitionParcel:
     def addFace(self, face):
         self.faces.append(face)
         pass
-
-
-def init():
-    pass
 
 def readFile(filename):
     f = open(filename, 'r')
@@ -65,38 +63,49 @@ def parseRekognitionJson(obj):
         box.width = detectedFace['BoundingBox']['Width']
         box.left = detectedFace['BoundingBox']['Left']
         box.top = detectedFace['BoundingBox']['Top']
-        
-        face.addBoundBox(box)
-
-        
-
+        face.addBoundBox(box)     
         parcel.addFace(face)
 
     return parcel
 
+def getNearestFace(parcel):
+    maxArea = 0
+    maxIndex = -1
+    i = 0
+    for face in parcel.faces:
+        area = face.boundBox.width * face.boundBox.height
+        print('name:',face.externalImageId,' area:',area)
+        if area > maxArea:
+            maxArea = area
+            maxIndex = i
+        
+    if maxIndex == -1:
+        print('face not matched')
+        return
 
-if __name__ == "__main__":
+    # found person
+    face = parcel.faces[maxIndex]    
+    print('result:', face.externalImageId)
+    return face
 
-    init()   
-    
-    with open(filename) as json_file:
-        data = json.load(json_file)
-    
+def getNearestInformation(jsonObj):
 
     # Do Nothing if FaceSearchResponse is None
-    if data.get('FaceSearchResponse') is None:
-        pass
+    if jsonObj.get('FaceSearchResponse') is None:
+        return
     
-    parcel = parseRekognitionJson(data)
+    # Parse Rekognition Json Object
+    parcel = parseRekognitionJson(jsonObj)
 
-    
-    # print(type(parcel))
-    # print(parcel.producerTimeStamp)
-    
-    for face in parcel.faces:
-        print(face.externalImageId)
+    # Get Event Timestamp
+    timestamp = parcel.producerTimeStamp
 
+    # Get Nearest Face Information (Who, Where)
+    face = getNearestFace(parcel)
+    print('timestamp:', timestamp,',name:', face.externalImageId, ',box:', face.boundBox.toJson())  
 
-
-    pass
+    return {
+        'timestamp':timestamp,
+        'name':face.externalImageId
+    }
 
